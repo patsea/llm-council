@@ -2,7 +2,7 @@
 
 from typing import List, Dict, Any, Tuple
 from .openrouter import query_models_parallel, query_model
-from .config import COUNCIL_MODELS, CHAIRMAN_MODEL
+from . import config
 
 
 async def stage1_collect_responses(user_query: str) -> List[Dict[str, Any]]:
@@ -17,8 +17,11 @@ async def stage1_collect_responses(user_query: str) -> List[Dict[str, Any]]:
     """
     messages = [{"role": "user", "content": user_query}]
 
+    # Get current council models from config
+    council_models = config.get_council_models()
+
     # Query all models in parallel
-    responses = await query_models_parallel(COUNCIL_MODELS, messages)
+    responses = await query_models_parallel(council_models, messages)
 
     # Format results
     stage1_results = []
@@ -94,8 +97,11 @@ Now provide your evaluation and ranking:"""
 
     messages = [{"role": "user", "content": ranking_prompt}]
 
+    # Get current council models from config
+    council_models = config.get_council_models()
+
     # Get rankings from all council models in parallel
-    responses = await query_models_parallel(COUNCIL_MODELS, messages)
+    responses = await query_models_parallel(council_models, messages)
 
     # Format results
     stage2_results = []
@@ -118,15 +124,7 @@ async def stage3_synthesize_final(
     stage2_results: List[Dict[str, Any]]
 ) -> Dict[str, Any]:
     """
-    Stage 3: Chairman synthesizes final response.
-
-    Args:
-        user_query: The original user query
-        stage1_results: Individual model responses from Stage 1
-        stage2_results: Rankings from Stage 2
-
-    Returns:
-        Dict with 'model' and 'response' keys
+    Stage 3: Chairman synthesizes final response with fallback support.
     """
     # Build comprehensive context for chairman
     stage1_text = "\n\n".join([
@@ -154,23 +152,44 @@ Your task as Chairman is to synthesize all of this information into a single, co
 - The peer rankings and what they reveal about response quality
 - Any patterns of agreement or disagreement
 
-Provide a clear, well-reasoned final answer that represents the council's collective wisdom:"""
+Provide a clear, well-reasoned final answer that represents the council's collective wisdom:
+
+IMPORTANT: Do not ask follow-up questions. Do not offer to generate content. Provide the complete, final answer directly. Your response should BE the answer to the user's original question, not a discussion about how to answer it."""
 
     messages = [{"role": "user", "content": chairman_prompt}]
 
-    # Query the chairman model
-    response = await query_model(CHAIRMAN_MODEL, messages)
+    # Get primary chairman and build fallback list
+    primary_chairman = config.get_chairman_model()
+    models_to_try = [primary_chairman] + getattr(config, 'FALLBACK_CHAIRMAN_MODELS', [])
 
-    if response is None:
-        # Fallback if chairman fails
-        return {
-            "model": CHAIRMAN_MODEL,
-            "response": "Error: Unable to generate final synthesis."
-        }
+    # Remove duplicates while preserving order
+    models_to_try = list(dict.fromkeys(models_to_try))
 
+    last_error = None
+
+    for model in models_to_try:
+        try:
+            response = await query_model(model, messages)
+
+            if response is not None:
+                return {
+                    "model": model,
+                    "response": response.get('content', ''),
+                    "used_fallback": model != primary_chairman
+                }
+        except Exception as e:
+            print(f"Chairman {model} failed: {e}")
+            last_error = str(e)
+            continue
+
+    # All models failed
+    error_msg = f"All chairman models failed. Last error: {last_error or 'Unknown'}"
     return {
-        "model": CHAIRMAN_MODEL,
-        "response": response.get('content', '')
+        "model": primary_chairman,
+        "response": f"Error: {error_msg}",
+        "error": True,
+        "error_type": "all_chairmen_failed",
+        "error_message": error_msg
     }
 
 

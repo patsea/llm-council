@@ -112,4 +112,110 @@ export const api = {
       }
     }
   },
+
+  /**
+   * Get all available models grouped by provider.
+   */
+  async getAvailableModels() {
+    const response = await fetch(`${API_BASE}/api/models/available`);
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || 'Failed to get available models from OpenRouter API');
+    }
+    return response.json();
+  },
+
+  /**
+   * Get current model configuration.
+   */
+  async getModelConfig() {
+    const response = await fetch(`${API_BASE}/api/models/config`);
+    if (!response.ok) {
+      throw new Error('Failed to get model config');
+    }
+    return response.json();
+  },
+
+  /**
+   * Update model configuration.
+   */
+  async updateModelConfig(config) {
+    const response = await fetch(`${API_BASE}/api/models/config`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(config),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || 'Failed to update model configuration');
+    }
+    return response.json();
+  },
+
+  /**
+   * Get export URL for a conversation.
+   */
+  getExportUrl(conversationId, format) {
+    return `${API_BASE}/api/conversations/${conversationId}/export/${format}`;
+  },
+
+  /**
+   * Get analytics metrics.
+   */
+  async getAnalyticsMetrics() {
+    const response = await fetch(`${API_BASE}/api/analytics/metrics`);
+    if (!response.ok) {
+      throw new Error('Failed to get analytics metrics');
+    }
+    return response.json();
+  },
+
+  /**
+   * Get system health including model validation status.
+   */
+  async getSystemHealth() {
+    const response = await fetch(`${API_BASE}/api/system/health`);
+    if (!response.ok) {
+      throw new Error('Failed to get system health');
+    }
+    return response.json();
+  },
+
+  /**
+   * Search conversations.
+   */
+  async searchConversations(query) {
+    const response = await fetch(`${API_BASE}/api/conversations/search`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ query }),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to search conversations');
+    }
+    return response.json();
+  },
+
+  /**
+   * Retry Stage 3 synthesis for a conversation that failed.
+   */
+  async retryStage3(conversationId) {
+    const response = await fetch(
+      `${API_BASE}/api/conversations/${conversationId}/retry-stage3`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    if (!response.ok) {
+      throw new Error('Failed to retry Stage 3');
+    }
+    return response.json();
+  },
 };

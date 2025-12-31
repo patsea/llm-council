@@ -170,3 +170,20 @@ def update_conversation_title(conversation_id: str, title: str):
 
     conversation["title"] = title
     save_conversation(conversation)
+
+
+def update_stage3(conversation_id: str, stage3_result: dict):
+    """Update Stage 3 result in the last assistant message."""
+    conversation = get_conversation(conversation_id)
+    if not conversation:
+        return False
+
+    # Find and update the last assistant message
+    for msg in reversed(conversation["messages"]):
+        if msg["role"] == "assistant":
+            msg["stage3"] = stage3_result
+            break
+
+    # Save
+    save_conversation(conversation)
+    return True

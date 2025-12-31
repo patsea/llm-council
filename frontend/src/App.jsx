@@ -1,19 +1,35 @@
 import { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useSearchParams } from 'react-router-dom';
+import NavBar from './components/NavBar';
 import Sidebar from './components/Sidebar';
 import ChatInterface from './components/ChatInterface';
+import ModelConfig from './components/ModelConfig';
+import Analytics from './components/Analytics';
 import { api } from './api';
 import './App.css';
 
-function App() {
+function ChatPage() {
   const [conversations, setConversations] = useState([]);
   const [currentConversationId, setCurrentConversationId] = useState(null);
   const [currentConversation, setCurrentConversation] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [searchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   // Load conversations on mount
   useEffect(() => {
     loadConversations();
   }, []);
+
+  // Check for conversation ID in URL params
+  useEffect(() => {
+    const conversationId = searchParams.get('conversation');
+    if (conversationId) {
+      setCurrentConversationId(conversationId);
+    }
+  }, [searchParams]);
 
   // Load conversation details when selected
   useEffect(() => {
@@ -55,6 +71,38 @@ function App() {
 
   const handleSelectConversation = (id) => {
     setCurrentConversationId(id);
+  };
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const data = await api.searchConversations(searchQuery);
+      setSearchResults(data.results || []);
+    } catch (error) {
+      console.error('Failed to search:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSearchResultClick = (conversationId) => {
+    setCurrentConversationId(conversationId);
+    setSearchResults([]);
+    setSearchQuery('');
+  };
+
+  const getMatchLocationLabel = (location) => {
+    const labels = {
+      title: 'Title',
+      user_message: 'User Message',
+      assistant_response: 'Assistant Response',
+    };
+    return labels[location] || location;
   };
 
   const handleSendMessage = async (content) => {
@@ -189,12 +237,122 @@ function App() {
         onSelectConversation={handleSelectConversation}
         onNewConversation={handleNewConversation}
       />
-      <ChatInterface
-        conversation={currentConversation}
-        onSendMessage={handleSendMessage}
-        isLoading={isLoading}
-      />
+      <div className="chat-main">
+        <div className="search-conversations" style={{ padding: '1rem', borderBottom: '1px solid #333' }}>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              placeholder="Search conversations by title or content..."
+              style={{
+                flex: 1,
+                background: '#1a1a1a',
+                border: '1px solid #444',
+                borderRadius: '4px',
+                padding: '0.5rem 0.75rem',
+                color: '#fff',
+                fontSize: '14px'
+              }}
+            />
+            <button
+              onClick={handleSearch}
+              disabled={isSearching}
+              style={{
+                background: '#2563eb',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px',
+                padding: '0.5rem 1rem',
+                cursor: isSearching ? 'not-allowed' : 'pointer',
+                opacity: isSearching ? 0.6 : 1
+              }}
+            >
+              {isSearching ? 'Searching...' : 'Search'}
+            </button>
+          </div>
+
+          {searchResults.length > 0 && (
+            <div style={{ marginTop: '0.5rem', background: '#1a1a1a', borderRadius: '4px', padding: '0.5rem' }}>
+              {searchResults.map((result) => (
+                <div
+                  key={result.id}
+                  onClick={() => handleSearchResultClick(result.id)}
+                  style={{
+                    padding: '0.5rem',
+                    cursor: 'pointer',
+                    borderRadius: '4px',
+                    marginBottom: '0.25rem'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = '#2a2a2a'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                >
+                  <div style={{ fontWeight: '500', marginBottom: '0.25rem' }}>{result.title}</div>
+                  <div style={{ fontSize: '12px', color: '#888' }}>
+                    {result.message_count} messages • {getMatchLocationLabel(result.match_location)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <ChatInterface
+          conversation={currentConversation}
+          onSendMessage={handleSendMessage}
+          isLoading={isLoading}
+        />
+      </div>
     </div>
+  );
+}
+
+function App() {
+  const [systemHealth, setSystemHealth] = useState(null);
+
+  useEffect(() => {
+    const checkHealth = async () => {
+      try {
+        const health = await api.getSystemHealth();
+        setSystemHealth(health);
+      } catch (error) {
+        console.error('Failed to check system health:', error);
+      }
+    };
+    checkHealth();
+  }, []);
+
+  return (
+    <BrowserRouter>
+      <div className="app-container">
+        {/* Red error banner at top if model validation failed */}
+        {systemHealth && !systemHealth.model_validation?.valid && (
+          <div style={{
+            backgroundColor: '#dc2626',
+            color: 'white',
+            padding: '12px 20px',
+            fontWeight: 'bold',
+            textAlign: 'center',
+            position: 'sticky',
+            top: 0,
+            zIndex: 9999
+          }}>
+            ⚠️ Model Configuration Error: Some configured models are not available in OpenRouter.
+            {systemHealth.model_validation?.errors?.map((error, i) => (
+              <div key={i} style={{ fontSize: '14px', fontWeight: 'normal', marginTop: '4px' }}>
+                {error}
+              </div>
+            ))}
+          </div>
+        )}
+        <NavBar />
+        <Routes>
+          <Route path="/" element={<ChatPage />} />
+          <Route path="/config" element={<div className="page-wrapper"><ModelConfig /></div>} />
+          <Route path="/analytics" element={<div className="page-wrapper"><Analytics /></div>} />
+        </Routes>
+      </div>
+    </BrowserRouter>
   );
 }
 

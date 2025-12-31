@@ -3,14 +3,18 @@ import ReactMarkdown from 'react-markdown';
 import Stage1 from './Stage1';
 import Stage2 from './Stage2';
 import Stage3 from './Stage3';
+import { api } from '../api';
 import './ChatInterface.css';
 
 export default function ChatInterface({
   conversation,
   onSendMessage,
   isLoading,
+  onConversationUpdate,
 }) {
   const [input, setInput] = useState('');
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [localConversation, setLocalConversation] = useState(conversation);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -18,8 +22,12 @@ export default function ChatInterface({
   };
 
   useEffect(() => {
-    scrollToBottom();
+    setLocalConversation(conversation);
   }, [conversation]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [localConversation]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -37,7 +45,33 @@ export default function ChatInterface({
     }
   };
 
-  if (!conversation) {
+  const handleExport = async (format) => {
+    if (!conversation) return;
+
+    try {
+      const url = api.getExportUrl(conversation.id, format);
+      window.open(url, '_blank');
+      setShowExportMenu(false);
+    } catch (error) {
+      console.error('Failed to export conversation:', error);
+    }
+  };
+
+  const handleRetrySuccess = async (messageIndex, newStage3) => {
+    // Update local conversation state with new stage3
+    const updatedConversation = { ...localConversation };
+    if (updatedConversation.messages[messageIndex]) {
+      updatedConversation.messages[messageIndex].stage3 = newStage3;
+      setLocalConversation(updatedConversation);
+    }
+
+    // Optionally notify parent if callback provided
+    if (onConversationUpdate) {
+      onConversationUpdate();
+    }
+  };
+
+  if (!localConversation) {
     return (
       <div className="chat-interface">
         <div className="empty-state">
@@ -50,14 +84,46 @@ export default function ChatInterface({
 
   return (
     <div className="chat-interface">
+      {localConversation && localConversation.messages.length > 0 && (
+        <div className="chat-header">
+          <h2 className="conversation-title">{localConversation.title}</h2>
+          <div className="chat-actions">
+            <div
+              className="export-dropdown"
+              onMouseEnter={() => setShowExportMenu(true)}
+              onMouseLeave={() => setShowExportMenu(false)}
+            >
+              <button className="export-button">
+                Export ▾
+              </button>
+              {showExportMenu && (
+                <div className="export-menu">
+                  <button
+                    className="export-menu-item"
+                    onClick={() => handleExport('markdown')}
+                  >
+                    Download as Markdown
+                  </button>
+                  <button
+                    className="export-menu-item"
+                    onClick={() => handleExport('json')}
+                  >
+                    Download as JSON
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       <div className="messages-container">
-        {conversation.messages.length === 0 ? (
+        {localConversation.messages.length === 0 ? (
           <div className="empty-state">
             <h2>Start a conversation</h2>
             <p>Ask a question to consult the LLM Council</p>
           </div>
         ) : (
-          conversation.messages.map((msg, index) => (
+          localConversation.messages.map((msg, index) => (
             <div key={index} className="message-group">
               {msg.role === 'user' ? (
                 <div className="user-message">
@@ -103,7 +169,13 @@ export default function ChatInterface({
                       <span>Running Stage 3: Final synthesis...</span>
                     </div>
                   )}
-                  {msg.stage3 && <Stage3 finalResponse={msg.stage3} />}
+                  {msg.stage3 && (
+                    <Stage3
+                      finalResponse={msg.stage3}
+                      conversationId={localConversation.id}
+                      onRetrySuccess={(newStage3) => handleRetrySuccess(index, newStage3)}
+                    />
+                  )}
                 </div>
               )}
             </div>
@@ -120,7 +192,7 @@ export default function ChatInterface({
         <div ref={messagesEndRef} />
       </div>
 
-      {conversation.messages.length === 0 && (
+      {localConversation.messages.length === 0 && (
         <form className="input-form" onSubmit={handleSubmit}>
           <textarea
             className="message-input"
