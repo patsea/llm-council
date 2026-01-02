@@ -1,7 +1,7 @@
 # LLM Council Bug Fixes - Claude Code Instructions
 
 **Date**: December 29, 2025  
-**Project**: `~/Dropbox/aloma/claude-code/llm-council`
+**Project**: `~/Dropbox/claude-code/llm-council`
 
 ---
 
@@ -1237,7 +1237,7 @@ curl -X PUT http://localhost:8001/api/models/config \
 # - [ ] Chairman still set
 
 # Test 3: Backend verification
-cat ~/Dropbox/aloma/claude-code/llm-council/data/model_config.json
+cat ~/Dropbox/claude-code/llm-council/data/model_config.json
 
 # Should show saved config
 
@@ -1252,7 +1252,7 @@ claude-auto
 ```bash
 # 1. Start fresh
 claude-auto-stop
-rm ~/Dropbox/aloma/claude-code/llm-council/data/model_config.json
+rm ~/Dropbox/claude-code/llm-council/data/model_config.json
 claude-auto
 
 # 2. Navigate to Model Selection
@@ -1388,7 +1388,7 @@ done
 
 ```bash
 # 1. Navigate to project
-cd ~/Dropbox/aloma/claude-code/llm-council
+cd ~/Dropbox/claude-code/llm-council
 
 # 2. Install new backend dependency
 cd backend

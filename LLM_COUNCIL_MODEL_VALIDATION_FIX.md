@@ -222,7 +222,7 @@ After implementing, run these tests:
 ```bash
 # 1. Restart backend
 kill $(lsof -t -i:8001) 2>/dev/null
-cd ~/Dropbox/aloma/claude-code/llm-council
+cd ~/Dropbox/claude-code/llm-council
 uv run python -m backend.main &
 
 # 2. Check startup logs for validation output
