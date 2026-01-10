@@ -5,34 +5,21 @@ from .openrouter import query_models_parallel, query_model
 from . import config
 
 
-async def stage1_collect_responses(user_query: str) -> List[Dict[str, Any]]:
-    """
-    Stage 1: Collect individual responses from all council models.
-
-    Args:
-        user_query: The user's question
-
-    Returns:
-        List of dicts with 'model' and 'response' keys
-    """
+async def stage1_collect_responses(user_query: str) -> Dict[str, Any]:
+    """Stage 1: Collect individual responses from all council models."""
     messages = [{"role": "user", "content": user_query}]
-
-    # Get current council models from config
     council_models = config.get_council_models()
 
-    # Query all models in parallel
-    responses = await query_models_parallel(council_models, messages)
+    result = await query_models_parallel(council_models, messages)
 
-    # Format results
     stage1_results = []
-    for model, response in responses.items():
-        if response is not None:  # Only include successful responses
-            stage1_results.append({
-                "model": model,
-                "response": response.get('content', '')
-            })
+    for model, response in result["responses"].items():
+        stage1_results.append({
+            "model": model,
+            "response": response.get('content', '')
+        })
 
-    return stage1_results
+    return {"responses": stage1_results, "errors": result["errors"]}
 
 
 async def stage2_collect_rankings(
@@ -323,14 +310,13 @@ async def run_full_council(user_query: str) -> Tuple[List, List, Dict, Dict]:
         Tuple of (stage1_results, stage2_results, stage3_result, metadata)
     """
     # Stage 1: Collect individual responses
-    stage1_results = await stage1_collect_responses(user_query)
+    stage1_data = await stage1_collect_responses(user_query)
+    stage1_results = stage1_data["responses"]
+    stage1_errors = stage1_data.get("errors", [])
 
     # If no models responded successfully, return error
     if not stage1_results:
-        return [], [], {
-            "model": "error",
-            "response": "All models failed to respond. Please try again."
-        }, {}
+        return [], [], {"model": "error", "response": "All models failed."}, {"stage1_errors": stage1_errors}
 
     # Stage 2: Collect rankings
     stage2_results, label_to_model = await stage2_collect_rankings(user_query, stage1_results)
@@ -348,7 +334,8 @@ async def run_full_council(user_query: str) -> Tuple[List, List, Dict, Dict]:
     # Prepare metadata
     metadata = {
         "label_to_model": label_to_model,
-        "aggregate_rankings": aggregate_rankings
+        "aggregate_rankings": aggregate_rankings,
+        "stage1_errors": stage1_errors
     }
 
     return stage1_results, stage2_results, stage3_result, metadata

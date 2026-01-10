@@ -175,9 +175,14 @@ function ModelConfig() {
 
   return (
     <div className="model-config">
-      <div className="model-config-header">
-        <h1>Model Configuration</h1>
-        <p>Configure which LLM models participate in the council and which model acts as chairman</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <div>
+          <h1>Model Configuration</h1>
+          <p>Configure which LLM models participate in the council</p>
+        </div>
+        <button onClick={handleSaveConfig} disabled={saving} className="save-config-btn">
+          {saving ? 'Saving...' : 'Save Configuration'}
+        </button>
       </div>
 
       {message && (
@@ -324,16 +329,6 @@ function ModelConfig() {
             </button>
           </div>
         </div>
-      </div>
-
-      <div className="config-actions">
-        <button
-          onClick={handleSaveConfig}
-          className="btn btn-success btn-large"
-          disabled={saving}
-        >
-          {saving ? 'Saving...' : 'Save Configuration'}
-        </button>
       </div>
     </div>
   );

@@ -1,3 +1,20 @@
+# LLM Council Cost Tracking Patch
+
+Before executing, read best practices from: ~/Dropbox/ALOMA/claude-code/CLAUDE_CODE_UNIVERSAL_BEST_PRACTICES.md
+
+**Execute from**: `~/Dropbox/ALOMA/claude-code/llm-council`
+
+## ⛔ RULES
+- Execute EVERY step in order
+- Do NOT create files not listed here
+- Do NOT improvise
+
+---
+
+## STEP 1: Replace backend/openrouter.py with cost capture
+
+```bash
+cat > backend/openrouter.py << 'EOF'
 """OpenRouter API client for making LLM requests."""
 
 import httpx
@@ -81,3 +98,38 @@ async def query_models_parallel(
             errors.append({"model": r["model"], "error": r["error"]})
     
     return {"responses": responses, "errors": errors, "total_cost": total_cost}
+EOF
+```
+
+Verify: `python3 -c "import ast; ast.parse(open('backend/openrouter.py').read())" && echo "✅ Syntax OK"`
+
+---
+
+## STEP 2: Restart backend
+
+```bash
+kill $(lsof -t -i:8001) 2>/dev/null || true
+cd ~/Dropbox/ALOMA/claude-code/llm-council
+uv run python -m backend.main > /tmp/llm-council-backend.log 2>&1 &
+sleep 3
+curl -s http://localhost:8001/ && echo ""
+```
+
+---
+
+## STEP 3: Verify cost is captured
+
+Run a test query, then check logs:
+
+```bash
+cat /tmp/llm-council-backend.log | tail -20
+```
+
+Cost data now available in responses. Frontend display can be added separately.
+
+---
+
+## Success Criteria
+- [ ] `x-openrouter-credits-used` header captured as `cost` field
+- [ ] `total_cost` returned from `query_models_parallel`
+- [ ] Backend restarts without errors
