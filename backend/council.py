@@ -16,7 +16,8 @@ async def stage1_collect_responses(user_query: str) -> Dict[str, Any]:
     for model, response in result["responses"].items():
         stage1_results.append({
             "model": model,
-            "response": response.get('content', '')
+            "response": response.get('content', ''),
+            "cost": response.get('cost', 0),
         })
 
     return {"responses": stage1_results, "errors": result["errors"]}
@@ -92,7 +93,7 @@ Now provide your evaluation and ranking:"""
 
     # Format results
     stage2_results = []
-    for model, response in responses.items():
+    for model, response in responses["responses"].items():
         if response is not None:
             full_text = response.get('content', '')
             parsed = parse_ranking_from_text(full_text)
@@ -335,7 +336,8 @@ async def run_full_council(user_query: str) -> Tuple[List, List, Dict, Dict]:
     metadata = {
         "label_to_model": label_to_model,
         "aggregate_rankings": aggregate_rankings,
-        "stage1_errors": stage1_errors
+        "stage1_errors": stage1_errors,
+        "stage1_cost": sum(r.get('cost', 0) for r in stage1_results),
     }
 
     return stage1_results, stage2_results, stage3_result, metadata

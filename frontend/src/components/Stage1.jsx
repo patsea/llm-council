@@ -2,7 +2,7 @@ import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import './Stage1.css';
 
-export default function Stage1({ responses, stage1Errors }) {
+export default function Stage1({ responses, stage1Errors, metadata }) {
   const [activeTab, setActiveTab] = useState(0);
 
   if (!responses || responses.length === 0) {
@@ -21,6 +21,11 @@ export default function Stage1({ responses, stage1Errors }) {
             onClick={() => setActiveTab(index)}
           >
             {resp.model.split('/')[1] || resp.model}
+            {resp.cost > 0 && (
+              <span style={{ fontSize: '11px', color: '#6b7280', marginLeft: '6px' }}>
+                ${resp.cost.toFixed(4)}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -31,6 +36,25 @@ export default function Stage1({ responses, stage1Errors }) {
           <ReactMarkdown>{responses[activeTab].response}</ReactMarkdown>
         </div>
       </div>
+
+      {/* Cost Summary */}
+      {metadata?.stage1_cost > 0 && (
+        <div style={{
+          backgroundColor: '#f0fdf4',
+          border: '1px solid #22c55e',
+          borderRadius: '8px',
+          padding: '12px 16px',
+          marginTop: '20px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <span style={{ color: '#166534', fontWeight: '500' }}>💰 Stage 1 Total Cost</span>
+          <span style={{ color: '#166534', fontWeight: 'bold', fontSize: '16px' }}>
+            ${metadata.stage1_cost.toFixed(4)}
+          </span>
+        </div>
+      )}
 
       {/* Failed Models Warning - shown after Stage 3 for visibility */}
       {stage1Errors && stage1Errors.length > 0 && (
