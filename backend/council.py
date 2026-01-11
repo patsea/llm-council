@@ -18,6 +18,9 @@ async def stage1_collect_responses(user_query: str) -> Dict[str, Any]:
             "model": model,
             "response": response.get('content', ''),
             "cost": response.get('cost', 0),
+            "tokens_prompt": response.get('tokens_prompt', 0),
+            "tokens_completion": response.get('tokens_completion', 0),
+            "response_time": response.get('response_time', 0),
         })
 
     return {"responses": stage1_results, "errors": result["errors"]}
@@ -100,7 +103,11 @@ Now provide your evaluation and ranking:"""
             stage2_results.append({
                 "model": model,
                 "ranking": full_text,
-                "parsed_ranking": parsed
+                "parsed_ranking": parsed,
+                "cost": response.get('cost', 0),
+                "tokens_prompt": response.get('tokens_prompt', 0),
+                "tokens_completion": response.get('tokens_completion', 0),
+                "response_time": response.get('response_time', 0),
             })
 
     return stage2_results, label_to_model
@@ -163,7 +170,11 @@ IMPORTANT: Do not ask follow-up questions. Do not offer to generate content. Pro
                 return {
                     "model": model,
                     "response": response.get('content', ''),
-                    "used_fallback": model != primary_chairman
+                    "used_fallback": model != primary_chairman,
+                    "cost": response.get('cost', 0),
+                    "tokens_prompt": response.get('tokens_prompt', 0),
+                    "tokens_completion": response.get('tokens_completion', 0),
+                    "response_time": response.get('response_time', 0),
                 }
         except Exception as e:
             print(f"Chairman {model} failed: {e}")

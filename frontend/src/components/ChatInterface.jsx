@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import Stage1 from './Stage1';
 import Stage2 from './Stage2';
 import Stage3 from './Stage3';
+import CouncilSummary from './CouncilSummary';
 import { api } from '../api';
 import './ChatInterface.css';
 
@@ -174,6 +175,16 @@ export default function ChatInterface({
                       finalResponse={msg.stage3}
                       conversationId={localConversation.id}
                       onRetrySuccess={(newStage3) => handleRetrySuccess(index, newStage3)}
+                    />
+                  )}
+
+                  {/* Council Summary - show after Stage 3 complete */}
+                  {msg.stage3 && !msg.stage3.error && (
+                    <CouncilSummary
+                      stage1={msg.stage1}
+                      stage2={msg.stage2}
+                      stage3={msg.stage3}
+                      metadata={msg.metadata}
                     />
                   )}
                 </div>

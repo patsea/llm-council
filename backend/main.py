@@ -466,6 +466,190 @@ async def get_analytics_metrics():
     }
 
 
+@app.get("/api/analytics/costs")
+async def get_cost_analytics():
+    """Get cost analytics across all conversations."""
+    import os
+    from pathlib import Path
+
+    conversations_dir = Path("data/conversations")
+
+    total_cost = 0
+    cost_by_model = {}
+    cost_by_stage = {"stage1": 0, "stage2": 0, "stage3": 0}
+    conversation_costs = []
+
+    for conv_file in conversations_dir.glob("*.json"):
+        try:
+            with open(conv_file) as f:
+                conv = json.load(f)
+
+            conv_cost = 0
+            for msg in conv.get("messages", []):
+                if msg.get("role") == "assistant":
+                    # Stage 1 costs
+                    for r in msg.get("stage1", []):
+                        cost = r.get("cost", 0)
+                        model = r.get("model", "unknown")
+                        total_cost += cost
+                        conv_cost += cost
+                        cost_by_stage["stage1"] += cost
+                        cost_by_model[model] = cost_by_model.get(model, 0) + cost
+
+                    # Stage 2 costs
+                    for r in msg.get("stage2", []):
+                        cost = r.get("cost", 0)
+                        model = r.get("model", "unknown")
+                        total_cost += cost
+                        conv_cost += cost
+                        cost_by_stage["stage2"] += cost
+                        cost_by_model[model] = cost_by_model.get(model, 0) + cost
+
+                    # Stage 3 cost
+                    stage3 = msg.get("stage3", {})
+                    cost = stage3.get("cost", 0)
+                    model = stage3.get("model", "unknown")
+                    total_cost += cost
+                    conv_cost += cost
+                    cost_by_stage["stage3"] += cost
+                    if model != "unknown":
+                        cost_by_model[model] = cost_by_model.get(model, 0) + cost
+
+            if conv_cost > 0:
+                conversation_costs.append({
+                    "id": conv.get("id"),
+                    "title": conv.get("title", "Untitled"),
+                    "cost": conv_cost,
+                    "created_at": conv.get("created_at")
+                })
+        except Exception as e:
+            continue
+
+    # Sort by cost descending
+    cost_by_model_sorted = sorted(cost_by_model.items(), key=lambda x: x[1], reverse=True)
+    conversation_costs.sort(key=lambda x: x["cost"], reverse=True)
+
+    return {
+        "total_cost": round(total_cost, 4),
+        "cost_by_model": [{"model": m, "cost": round(c, 4)} for m, c in cost_by_model_sorted],
+        "cost_by_stage": {k: round(v, 4) for k, v in cost_by_stage.items()},
+        "top_conversations": conversation_costs[:10],
+        "conversation_count": len(conversation_costs)
+    }
+
+
+@app.get("/api/analytics/performance")
+async def get_performance_analytics():
+    """Get token and performance analytics across all conversations."""
+    import os
+    from pathlib import Path
+
+    conversations_dir = Path("data/conversations")
+
+    total_tokens = 0
+    tokens_by_model = {}
+    response_times = {}
+    errors_by_model = {}
+
+    for conv_file in conversations_dir.glob("*.json"):
+        try:
+            with open(conv_file) as f:
+                conv = json.load(f)
+
+            for msg in conv.get("messages", []):
+                if msg.get("role") == "assistant":
+                    # Stage 1
+                    for r in msg.get("stage1", []):
+                        model = r.get("model", "unknown")
+                        prompt = r.get("tokens_prompt", 0)
+                        completion = r.get("tokens_completion", 0)
+                        time = r.get("response_time", 0)
+
+                        total_tokens += prompt + completion
+                        if model not in tokens_by_model:
+                            tokens_by_model[model] = {"prompt": 0, "completion": 0, "total": 0}
+                        tokens_by_model[model]["prompt"] += prompt
+                        tokens_by_model[model]["completion"] += completion
+                        tokens_by_model[model]["total"] += prompt + completion
+
+                        if time > 0:
+                            if model not in response_times:
+                                response_times[model] = []
+                            response_times[model].append(time)
+
+                    # Stage 2
+                    for r in msg.get("stage2", []):
+                        model = r.get("model", "unknown")
+                        prompt = r.get("tokens_prompt", 0)
+                        completion = r.get("tokens_completion", 0)
+                        time = r.get("response_time", 0)
+
+                        total_tokens += prompt + completion
+                        if model not in tokens_by_model:
+                            tokens_by_model[model] = {"prompt": 0, "completion": 0, "total": 0}
+                        tokens_by_model[model]["prompt"] += prompt
+                        tokens_by_model[model]["completion"] += completion
+                        tokens_by_model[model]["total"] += prompt + completion
+
+                        if time > 0:
+                            if model not in response_times:
+                                response_times[model] = []
+                            response_times[model].append(time)
+
+                    # Stage 3
+                    stage3 = msg.get("stage3", {})
+                    model = stage3.get("model", "unknown")
+                    prompt = stage3.get("tokens_prompt", 0)
+                    completion = stage3.get("tokens_completion", 0)
+                    time = stage3.get("response_time", 0)
+
+                    if model != "unknown":
+                        total_tokens += prompt + completion
+                        if model not in tokens_by_model:
+                            tokens_by_model[model] = {"prompt": 0, "completion": 0, "total": 0}
+                        tokens_by_model[model]["prompt"] += prompt
+                        tokens_by_model[model]["completion"] += completion
+                        tokens_by_model[model]["total"] += prompt + completion
+
+                        if time > 0:
+                            if model not in response_times:
+                                response_times[model] = []
+                            response_times[model].append(time)
+
+                    # Errors
+                    for err in msg.get("metadata", {}).get("stage1_errors", []):
+                        model = err.get("model", "unknown")
+                        if model not in errors_by_model:
+                            errors_by_model[model] = 0
+                        errors_by_model[model] += 1
+
+        except Exception:
+            continue
+
+    # Calculate averages
+    avg_response_times = []
+    for model, times in response_times.items():
+        avg_response_times.append({
+            "model": model,
+            "avg_time": round(sum(times) / len(times), 2),
+            "min_time": round(min(times), 2),
+            "max_time": round(max(times), 2),
+            "count": len(times)
+        })
+    avg_response_times.sort(key=lambda x: x["avg_time"])
+
+    # Sort tokens by total
+    tokens_sorted = sorted(tokens_by_model.items(), key=lambda x: x[1]["total"], reverse=True)
+
+    return {
+        "total_tokens": total_tokens,
+        "tokens_by_model": [{"model": m, **t} for m, t in tokens_sorted],
+        "response_times": avg_response_times,
+        "errors_by_model": [{"model": m, "count": c} for m, c in sorted(errors_by_model.items(), key=lambda x: x[1], reverse=True)],
+        "total_errors": sum(errors_by_model.values())
+    }
+
+
 @app.post("/api/conversations/search")
 async def search_conversations(request: SearchConversationsRequest):
     """Search conversations by query string."""

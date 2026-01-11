@@ -1,6 +1,7 @@
 """OpenRouter API client for making LLM requests."""
 
 import httpx
+import time
 from typing import List, Dict, Any, Optional
 from .config import OPENROUTER_API_KEY, OPENROUTER_API_URL
 
@@ -18,26 +19,22 @@ async def query_model(
     payload = {"model": model, "messages": messages}
 
     try:
+        start_time = time.time()
         async with httpx.AsyncClient(timeout=timeout) as client:
             response = await client.post(OPENROUTER_API_URL, headers=headers, json=payload)
             response.raise_for_status()
+            elapsed = time.time() - start_time
             data = response.json()
             message = data['choices'][0]['message']
             usage = data.get('usage', {})
-            
-            # Get cost from header (returns credits used as string)
-            cost_str = response.headers.get('x-openrouter-credits-used', '0')
-            try:
-                cost = float(cost_str)
-            except (ValueError, TypeError):
-                cost = 0.0
-            
+
             return {
                 'content': message.get('content'),
                 'reasoning_details': message.get('reasoning_details'),
-                'cost': cost,
+                'cost': usage.get('cost', 0),
                 'tokens_prompt': usage.get('prompt_tokens', 0),
                 'tokens_completion': usage.get('completion_tokens', 0),
+                'response_time': round(elapsed, 2),
             }
     except httpx.HTTPStatusError as e:
         print(f"Error querying model {model}: {e}")

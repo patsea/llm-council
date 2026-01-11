@@ -4,10 +4,14 @@ import './Analytics.css';
 
 function Analytics() {
   const [metrics, setMetrics] = useState(null);
+  const [costData, setCostData] = useState(null);
+  const [perfData, setPerfData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadMetrics();
+    loadCostData();
+    loadPerfData();
   }, []);
 
   const loadMetrics = async () => {
@@ -18,6 +22,26 @@ function Analytics() {
     } catch (error) {
       console.error('Failed to load metrics:', error);
       setLoading(false);
+    }
+  };
+
+  const loadCostData = async () => {
+    try {
+      const response = await fetch('http://localhost:8001/api/analytics/costs');
+      const data = await response.json();
+      setCostData(data);
+    } catch (error) {
+      console.error('Cost analytics error:', error);
+    }
+  };
+
+  const loadPerfData = async () => {
+    try {
+      const response = await fetch('http://localhost:8001/api/analytics/performance');
+      const data = await response.json();
+      setPerfData(data);
+    } catch (error) {
+      console.error('Performance analytics error:', error);
     }
   };
 
@@ -35,6 +59,149 @@ function Analytics() {
         <h1>Analytics</h1>
         <p>Model performance metrics</p>
       </div>
+
+      {costData && (
+        <div className="analytics-section">
+          <h2>💰 Cost Analytics</h2>
+
+          <div className="stats-grid">
+            <div className="stat-card">
+              <div className="stat-value">${costData.total_cost.toFixed(4)}</div>
+              <div className="stat-label">Total Spend</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-value">${(costData.total_cost / costData.conversation_count).toFixed(4)}</div>
+              <div className="stat-label">Avg per Conversation</div>
+            </div>
+          </div>
+
+          <h3>Cost by Model</h3>
+          <table className="analytics-table">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Total Cost</th>
+                <th>% of Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {costData.cost_by_model.map((item, i) => (
+                <tr key={i}>
+                  <td>{item.model}</td>
+                  <td>${item.cost.toFixed(4)}</td>
+                  <td>{((item.cost / costData.total_cost) * 100).toFixed(1)}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <h3>Cost by Stage</h3>
+          <div className="stage-costs">
+            <div className="stage-cost stage1">
+              <span>Stage 1 (Response)</span>
+              <span>${costData.cost_by_stage.stage1.toFixed(4)}</span>
+            </div>
+            <div className="stage-cost stage2">
+              <span>Stage 2 (Ranking)</span>
+              <span>${costData.cost_by_stage.stage2.toFixed(4)}</span>
+            </div>
+            <div className="stage-cost stage3">
+              <span>Stage 3 (Chairman)</span>
+              <span>${costData.cost_by_stage.stage3.toFixed(4)}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {perfData && (
+        <>
+          <div className="analytics-section">
+            <h2>📊 Token Analytics</h2>
+
+            <div className="stats-grid">
+              <div className="stat-card">
+                <div className="stat-value">{perfData.total_tokens.toLocaleString()}</div>
+                <div className="stat-label">Total Tokens</div>
+              </div>
+            </div>
+
+            <h3>Tokens by Model</h3>
+            <table className="analytics-table">
+              <thead>
+                <tr>
+                  <th>Model</th>
+                  <th>Input</th>
+                  <th>Output</th>
+                  <th>Total</th>
+                  <th>Ratio (In/Out)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {perfData.tokens_by_model.map((item, i) => (
+                  <tr key={i}>
+                    <td>{item.model.split('/')[1] || item.model}</td>
+                    <td>{item.prompt.toLocaleString()}</td>
+                    <td>{item.completion.toLocaleString()}</td>
+                    <td>{item.total.toLocaleString()}</td>
+                    <td>{item.completion > 0 ? (item.prompt / item.completion).toFixed(2) : '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="analytics-section">
+            <h2>⚡ Response Times</h2>
+
+            <table className="analytics-table">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Model</th>
+                  <th>Avg Time</th>
+                  <th>Min</th>
+                  <th>Max</th>
+                  <th>Samples</th>
+                </tr>
+              </thead>
+              <tbody>
+                {perfData.response_times.map((item, i) => (
+                  <tr key={i}>
+                    <td>#{i + 1}</td>
+                    <td>{item.model.split('/')[1] || item.model}</td>
+                    <td>{item.avg_time}s</td>
+                    <td>{item.min_time}s</td>
+                    <td>{item.max_time}s</td>
+                    <td>{item.count}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {perfData.total_errors > 0 && (
+            <div className="analytics-section">
+              <h2>⚠️ Errors ({perfData.total_errors})</h2>
+              <table className="analytics-table">
+                <thead>
+                  <tr>
+                    <th>Model</th>
+                    <th>Error Count</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {perfData.errors_by_model.map((item, i) => (
+                    <tr key={i}>
+                      <td>{item.model}</td>
+                      <td>{item.count}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
+      )}
 
       <div className="analytics-section">
         <h2>Model Performance Metrics</h2>
