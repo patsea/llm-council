@@ -6,12 +6,17 @@ function Analytics() {
   const [metrics, setMetrics] = useState(null);
   const [costData, setCostData] = useState(null);
   const [perfData, setPerfData] = useState(null);
+  const [valueData, setValueData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadMetrics();
     loadCostData();
     loadPerfData();
+    fetch('http://localhost:8001/api/analytics/value-score')
+      .then(res => res.json())
+      .then(data => setValueData(data))
+      .catch(err => console.error('Value score error:', err));
   }, []);
 
   const loadMetrics = async () => {
@@ -59,6 +64,61 @@ function Analytics() {
         <h1>Analytics</h1>
         <p>Model performance metrics</p>
       </div>
+
+      {valueData && valueData.models.length > 0 && (
+        <div className="analytics-section value-section">
+          <h2>🏆 Model Value Rankings</h2>
+          <p className="section-subtitle">
+            Composite score: Quality (40%) + Speed (30%) + Cost Efficiency (30%)
+          </p>
+
+          <div className="value-podium">
+            {valueData.models.slice(0, 3).map((item, i) => (
+              <div key={i} className={`podium-item rank-${i + 1}`}>
+                <div className="podium-rank">#{i + 1}</div>
+                <div className="podium-model">{item.model.split('/')[1] || item.model}</div>
+                <div className="podium-score">{item.value_score}</div>
+                <div className="podium-breakdown">
+                  <span title="Quality">🎯 {item.quality_score}</span>
+                  <span title="Speed">⚡ {item.speed_score}</span>
+                  <span title="Efficiency">💰 {item.efficiency_score}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <table className="analytics-table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Model</th>
+                <th>Value Score</th>
+                <th>Quality</th>
+                <th>Speed</th>
+                <th>Efficiency</th>
+                <th>Avg Rank</th>
+                <th>Avg Time</th>
+                <th>$/Token</th>
+              </tr>
+            </thead>
+            <tbody>
+              {valueData.models.map((item, i) => (
+                <tr key={i} className={i < 3 ? 'top-model' : ''}>
+                  <td>#{i + 1}</td>
+                  <td>{item.model.split('/')[1] || item.model}</td>
+                  <td><strong>{item.value_score}</strong></td>
+                  <td>{item.quality_score}</td>
+                  <td>{item.speed_score}</td>
+                  <td>{item.efficiency_score}</td>
+                  <td>{item.avg_rank}</td>
+                  <td>{item.avg_time}s</td>
+                  <td>{item.tokens_per_dollar.toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {costData && (
         <div className="analytics-section">

@@ -650,6 +650,132 @@ async def get_performance_analytics():
     }
 
 
+@app.get("/api/analytics/value-score")
+async def get_value_scores():
+    """Calculate composite value score for each model.
+
+    Value = (Quality × 0.4) + (Speed × 0.3) + (Cost Efficiency × 0.3)
+
+    Quality = normalized inverse of avg peer ranking (lower rank = higher quality)
+    Speed = normalized inverse of avg response time
+    Cost Efficiency = tokens per dollar
+    """
+    from pathlib import Path
+    from collections import defaultdict
+
+    conversations_dir = Path("data/conversations")
+
+    # Collect all rankings from stage2 parsed_ranking
+    # Each model ranks all other models, giving them positions 1-N
+    model_rankings = defaultdict(list)  # model -> [rank1, rank2, ...]
+    model_stats = {}  # model -> {times: [], tokens: 0, cost: 0}
+
+    for conv_file in conversations_dir.glob("*.json"):
+        try:
+            with open(conv_file) as f:
+                conv = json.load(f)
+
+            for msg in conv.get("messages", []):
+                if msg.get("role") != "assistant":
+                    continue
+
+                # Build label to model mapping from stage1 order
+                stage1 = msg.get("stage1", [])
+                label_to_model = {}
+                for i, s1 in enumerate(stage1):
+                    label = chr(65 + i)  # A, B, C, D...
+                    label_to_model[f"Response {label}"] = s1.get("model", "")
+
+                # Extract rankings from stage2 parsed_ranking
+                # Each model in stage2 has a parsed_ranking list
+                # The position in that list IS the rank (0=1st, 1=2nd, etc.)
+                for s2 in msg.get("stage2", []):
+                    parsed = s2.get("parsed_ranking", [])
+                    for position, response_label in enumerate(parsed):
+                        # Map "Response A" back to actual model name
+                        model = label_to_model.get(response_label)
+                        if model:
+                            rank = position + 1  # Convert 0-indexed to 1-indexed
+                            model_rankings[model].append(rank)
+
+                # Get times, tokens, costs from all stages
+                for r in msg.get("stage1", []) + msg.get("stage2", []):
+                    model = r.get("model", "")
+                    if not model:
+                        continue
+                    if model not in model_stats:
+                        model_stats[model] = {"times": [], "tokens": 0, "cost": 0}
+
+                    if r.get("response_time", 0) > 0:
+                        model_stats[model]["times"].append(r["response_time"])
+                    model_stats[model]["tokens"] += r.get("tokens_prompt", 0) + r.get("tokens_completion", 0)
+                    model_stats[model]["cost"] += r.get("cost", 0)
+
+                # Stage 3
+                stage3 = msg.get("stage3", {})
+                model = stage3.get("model", "")
+                if model:
+                    if model not in model_stats:
+                        model_stats[model] = {"times": [], "tokens": 0, "cost": 0}
+                    if stage3.get("response_time", 0) > 0:
+                        model_stats[model]["times"].append(stage3["response_time"])
+                    model_stats[model]["tokens"] += stage3.get("tokens_prompt", 0) + stage3.get("tokens_completion", 0)
+                    model_stats[model]["cost"] += stage3.get("cost", 0)
+
+        except Exception:
+            continue
+
+    # Calculate average rank for each model
+    def get_avg_rank(model):
+        if model in model_rankings and model_rankings[model]:
+            return sum(model_rankings[model]) / len(model_rankings[model])
+        return 5  # Default to worst rank if no data
+
+    # Calculate scores
+    results = []
+    for model, stats in model_stats.items():
+        if not stats["times"] and stats["tokens"] == 0:
+            continue
+
+        avg_rank = get_avg_rank(model)
+        avg_time = sum(stats["times"]) / len(stats["times"]) if stats["times"] else 30
+        tokens_per_dollar = stats["tokens"] / stats["cost"] if stats["cost"] > 0 else 0
+
+        # Normalize scores (0-100)
+        # Quality: rank 1 = 100, rank 5 = 0  (assuming max 5 models)
+        num_models = 4  # Typical council size
+        quality_score = max(0, (num_models - avg_rank + 1) / num_models * 100)
+        # Speed: faster is better, assume 1s = 100, 30s = 0
+        speed_score = max(0, min(100, (30 - avg_time) / 29 * 100))
+
+        results.append({
+            "model": model,
+            "avg_rank": round(avg_rank, 2),
+            "avg_time": round(avg_time, 2),
+            "tokens_per_dollar": round(tokens_per_dollar, 0),
+            "total_tokens": stats["tokens"],
+            "total_cost": round(stats["cost"], 4),
+            "quality_score": round(quality_score, 1),
+            "speed_score": round(speed_score, 1),
+        })
+
+    # Normalize cost efficiency and calculate final score
+    if results:
+        max_tpd = max(r["tokens_per_dollar"] for r in results) or 1
+        for r in results:
+            r["efficiency_score"] = round((r["tokens_per_dollar"] / max_tpd) * 100, 1)
+            r["value_score"] = round(
+                r["quality_score"] * 0.4 +
+                r["speed_score"] * 0.3 +
+                r["efficiency_score"] * 0.3,
+                1
+            )
+
+    results.sort(key=lambda x: x["value_score"], reverse=True)
+
+    return {"models": results}
+
+
 @app.post("/api/conversations/search")
 async def search_conversations(request: SearchConversationsRequest):
     """Search conversations by query string."""

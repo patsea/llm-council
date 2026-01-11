@@ -38,6 +38,11 @@ export default function CouncilSummary({ stage1, stage2, stage3, metadata }) {
   const stage3Tokens = (stage3?.tokens_prompt || 0) + (stage3?.tokens_completion || 0);
   const totalTokens = stage1Tokens + stage2Tokens + stage3Tokens;
 
+  const stage1Time = stage1.reduce((sum, r) => sum + (r.response_time || 0), 0);
+  const stage2Time = stage2?.reduce((sum, r) => sum + (r.response_time || 0), 0) || 0;
+  const stage3Time = stage3?.response_time || 0;
+  const totalTime = stage1Time + stage2Time + stage3Time;
+
   const errorCount = metadata?.stage1_errors?.length || 0;
 
   const formatModel = (model) => model?.split('/')[1] || model || '-';
@@ -127,7 +132,7 @@ export default function CouncilSummary({ stage1, stage2, stage3, metadata }) {
             <td>{stage1.length + (stage2?.length || 0) + 1} calls</td>
             <td><strong>${totalCost.toFixed(4)}</strong></td>
             <td><strong>{totalTokens.toLocaleString()}</strong></td>
-            <td>-</td>
+            <td>{totalTime > 0 ? `${totalTime.toFixed(1)}s` : '-'}</td>
             <td>-</td>
           </tr>
         </tbody>
