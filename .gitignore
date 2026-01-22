@@ -19,3 +19,27 @@ data/
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
+# Instruction and planning files (should not be committed to public repos)
+*PHASE*.md
+*phase*.md
+*INSTRUCTION*.md
+*instruction*.md
+*FIX*.md
+*fix*.md
+*UPDATE*.md
+*update*.md
+*RECON*.md
+*recon*.md
+*PLAN*.md
+*plan*.md
+*BRIEFING*.md
+*briefing*.md
+*TEST_SCRIPT*.md
+*test_script*.md
+ALOMA*.md
+!README.md
+!CONTRIBUTING.md
+!CHANGELOG.md
+!CODE_OF_CONDUCT.md
+!SECURITY.md
+!LICENSE.md
