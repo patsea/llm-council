@@ -43,3 +43,5 @@ ALOMA*.md
 !CODE_OF_CONDUCT.md
 !SECURITY.md
 !LICENSE.md
+.env.local
+.env.production
