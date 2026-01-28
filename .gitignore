@@ -47,3 +47,6 @@ ALOMA*.md
 !LICENSE.md
 .env.local
 .env.production
+
+# Research and standalone documentation (backed up to private aloma-io git)
+docs/
