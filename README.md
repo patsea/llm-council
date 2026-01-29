@@ -3,14 +3,24 @@
 <!-- AUTO-GENERATED: Recent Changes -->
 ### Recent Activity
 
-**Last Updated**: 2026-01-28
-**Commits This Week**: 12
+**Last Updated**: 2026-01-29
+**Commits This Week**: 14
 
 **Today's Commits** (1):
-- `f93e5c5` chore: auto-commit: 1 files 2026-01-28
+- `b5af697` chore: auto-commit: 13 files 2026-01-29
 
-**Recent Changes** (1 files):
-- `README.md`
+**Recent Changes** (24 files):
+- `backend/pytest.ini`
+- `backend/run-tests.sh`
+- `backend/tests/__init__.py`
+- `backend/tests/conftest.py`
+- `backend/tests/test_council.py`
+- `backend/tests/test_storage.py`
+- `frontend/coverage/base.css`
+- `frontend/coverage/block-navigation.js`
+- `frontend/coverage/coverage-final.json`
+- `frontend/coverage/favicon.png`
+- ... and 14 more
 <!-- END AUTO-GENERATED -->
 
 
