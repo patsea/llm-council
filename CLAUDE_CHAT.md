@@ -172,3 +172,23 @@ Search database e9e44e5e-02fd-4c1f-871b-4a57182bfb19 before re-investigating kno
 - Claude Code interactive sessions: **claude-opus-4-6**
 - Sub-agent / pipeline API calls: **claude-sonnet-4-6**
 - Never hardcode model strings — always config-driven
+---
+
+## Open Brain — Personal Decision Record
+
+Write in real time during sessions. Also sweep at EOD for anything missed.
+
+### Write trigger (ingest-thought MCP immediately)
+- Multi-LLM deliberation design decision — stage architecture, anonymization approach
+- Model selection or routing reasoning
+- Insight about how LLMs behave differently in deliberation vs solo use
+- Product direction — what LLM Council should become
+
+### Write format
+  title: brief description
+  project: llm-council
+  content: full reasoning in first person
+  tags: llm-council, deliberation, models, architecture (as relevant)
+
+### EOD sweep
+Review session for any decisions not yet written. Capture before closing.
