@@ -154,3 +154,15 @@ Verify: page URL returned
 
 ### Before investigating: search Notion first
 Search database e9e44e5e-02fd-4c1f-871b-4a57182bfb19 before re-investigating known patterns.
+---
+
+## Superpowers — always active
+
+| Skill | Rule |
+|-------|------|
+| TDD | STEP 0: write failing tests first. Backend: pytest. Frontend: vitest. Report N passed / N total in every SUMMARY. 31 baseline tests must always pass. |
+| Systematic debugging | Root cause + fix in one pass. Standalone INVESTIGATE only when domain genuinely unknown. |
+| Verification | Run `cd backend && python -m pytest` AND `cd frontend && npm test` before SUMMARY. Coverage must not drop below 63%. |
+| Service independence | Backend (8001) and frontend (5173) are separate processes. Verify each independently after any change. Never assume both updated. |
+| Subagent | Use parallel agents for independent backend/frontend changes. Each writes findings before reporting. |
+| Model config discipline | All model references via data/model_config.json. Never hardcode. Verify config change propagates to all 3 stages. |
