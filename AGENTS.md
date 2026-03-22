@@ -42,3 +42,30 @@ Base: /Users/pwilliamson/Dropbox/ALOMA/claude-code/apps/llm-council/
 Panel: instructions/Project files/LLM Council/
 Upload: instructions/Project files/LLM Council/Upload/
 Findings: docs/findings/ (central)
+---
+
+## AI Engineer Role
+
+**Invoke:** "Read apps/llm-council/CLAUDE.md. Act as AI Engineer for [task]."
+
+### AI Components
+This project IS the AI component — the entire 3-stage deliberation system:
+- **Stage 1 (Collect):** All models respond independently via OpenRouter
+- **Stage 2 (Review):** Models review each other anonymously — anonymization logic in council.py
+- **Stage 3 (Synthesize):** Chairman model produces final synthesis
+
+### Model Config
+- Config: data/model_config.json — never hardcode model names
+- All models via OpenRouter API — openrouter.py handles routing
+- De-anonymization: names hidden in Stage 2 API calls, revealed in UI — verify both directions
+
+### Evaluation Principles
+- Stage 2 anonymization must be verifiable — log which model produced which response
+- Chairman synthesis quality is the key output metric — spot-check against individual responses
+- 95 saved conversations in data/conversations/ — use for regression testing prompt changes
+- Coverage target: 63% minimum — AI logic changes require test coverage
+
+### Rules
+- Model changes: update data/model_config.json + run full 3-stage test with real query
+- Prompt changes to any stage: verify output shape matches what downstream stage expects
+- Never expose model names in Stage 2 API calls — anonymization is the core design invariant
