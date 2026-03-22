@@ -127,3 +127,30 @@ Every 15 interactions: assess context. >700k tokens → ask if EOD wanted.
 
 **P2:**
 <!-- Populate at first session -->
+---
+
+## Notion Long-Term Memory
+
+**LLM Council Knowledge Base ID:** `e9e44e5e-02fd-4c1f-871b-4a57182bfb19`
+
+### What syncs to Notion
+- FINDINGS-*.md → type=findings
+- HANDOVER-EOD-*.md → type=handover
+
+### What does NOT sync
+- Instruction files, source code, conversation JSON files
+
+### Sync step (add to every FINDINGS and EOD instruction)
+```
+Use Notion MCP: create page in database e9e44e5e-02fd-4c1f-871b-4a57182bfb19
+  title: <filename without extension>
+  type: findings | handover
+  date: <YYYY-MM-DD>
+  tags: <component names e.g. backend,frontend,council,storage>
+  summary: <5 bullets from ## Summary section>
+  full_content: <full file content>
+Verify: page URL returned
+```
+
+### Before investigating: search Notion first
+Search database e9e44e5e-02fd-4c1f-871b-4a57182bfb19 before re-investigating known patterns.
