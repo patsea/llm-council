@@ -252,6 +252,9 @@ Output format:
 
 ## EOD Open Brain Protocol
 
+**Template:** `~/Dropbox/ALOMA/claude-code/docs/EOD-OPEN-BRAIN-TEMPLATE.md`
+Claude Chat reads this template when generating EOD-DISK-OPS instruction files.
+
 ### What Claude Chat does at EOD
 Review the entire session. Identify everything worth writing to Open Brain:
 - Any decision Patrick made or stated
@@ -262,23 +265,17 @@ Review the entire session. Identify everything worth writing to Open Brain:
 
 **Threshold:** If it would help future-Patrick understand why something was decided — write it.
 
-### What goes into EOD-DISK-OPS
-For each identified entry:
-```bash
-curl -s -X POST \
-  "https://rktsziupwwvggefjgsil.supabase.co/functions/v1/ingest-thought?key=e62b35b7c52d097cfe6a35afa236277ad3a3eb310f93db9bd0e71fc9ac0d9373" \
-  -H "Content-Type: application/json" \
-  -d '{"title":"<title>","content":"<full reasoning>","tags":"<project,topic>"}'
-```
+### How writes happen
+Claude Code uses the Open Brain MCP `capture_thought` tool — NOT curl to ingest-thought
+(ingest-thought is a Slack webhook handler, not a direct write endpoint).
 
-### Feedback in EOD-DISK-OPS
-After writing, query Open Brain and append to Handover:
-```bash
-curl -s -X POST \
-  "https://rktsziupwwvggefjgsil.supabase.co/functions/v1/open-brain-mcp?key=e62b35b7c52d097cfe6a35afa236277ad3a3eb310f93db9bd0e71fc9ac0d9373" \
-  -H "Content-Type: application/json" \
-  -d '{"method":"tools/call","params":{"name":"list_thoughts","arguments":{"limit":20}},"jsonrpc":"2.0","id":1}'
-```
+Each EOD-DISK-OPS instruction includes explicit `capture_thought` calls for each entry
+identified by Claude Chat during session review.
+
+### Feedback retrieval
+After writing, Claude Code queries Open Brain via the `list_thoughts` MCP tool and appends
+results to the Handover file in today / 3-day / 7-day buckets. The full query + formatting
+logic is in the template file above.
 
 ### Handover format (with feedback appended)
 ```
