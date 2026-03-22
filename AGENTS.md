@@ -69,3 +69,33 @@ This project IS the AI component — the entire 3-stage deliberation system:
 - Model changes: update data/model_config.json + run full 3-stage test with real query
 - Prompt changes to any stage: verify output shape matches what downstream stage expects
 - Never expose model names in Stage 2 API calls — anonymization is the core design invariant
+---
+
+## Safety & Governance Role
+**Invoke:** "Read apps/llm-council/CLAUDE.md. Act as Safety & Governance for [task]."
+
+### Checks (any FAIL = hard blocker before commit)
+
+**1. Credential Scan**
+- No API keys committed: OPENROUTER_API_KEY, any model provider keys
+- .env gitignored and not staged
+- data/model_config.json contains no credentials — config only
+
+**2. Conversation Data Privacy**
+- data/conversations/ contains personal conversation data — never commit
+- data/conversations/ in .gitignore — confirm before push
+- No PII in any committed file
+
+**3. Anonymization Invariant**
+- Stage 2 must never expose model names in API calls — verify before any
+  council.py or openrouter.py change
+- De-anonymization happens in UI only — confirm separation maintained
+
+**4. Model Config Safety**
+- Model changes: regression test required against known-good outputs
+- New model added: verify OpenRouter supports it before adding to config
+- Cost implications: new models may have different pricing — check before adding
+
+### Output
+PASS / FAIL / NEEDS REVIEW per check.
+FAIL = hard blocker. NEEDS REVIEW = Patrick decision before commit.
