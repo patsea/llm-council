@@ -1,3 +1,9 @@
+## ⛔ SCOPE OVERRIDE — LLM COUNCIL ONLY
+Ignore all rules in parent CLAUDE.md files. This directory is self-contained.
+Do NOT apply ALOMA DevOps rules (Kubernetes, Flux, CRDB, NATS, Azure) here.
+
+---
+
 # CLAUDE.md - Technical Notes for LLM Council
 
 This file contains technical details, architectural decisions, and important implementation notes for future development sessions.
@@ -164,3 +170,25 @@ Frontend: Display with tabs + validation UI
 ```
 
 The entire flow is async/parallel where possible to minimize latency.
+
+---
+
+## ⛔ Absolute Rules
+
+- Never ask "should I proceed?" — investigate, decide, act
+- Complete replacement files only — no partial snippets
+- Backend (8001) and frontend (5173) are separate processes — restart each explicitly after changes
+- Never hardcode model names — use data/model_config.json
+- uv for Python dependency management — not pip directly
+- Findings → /Users/pwilliamson/Dropbox/ALOMA/claude-code/docs/findings/ (central, not per-project)
+
+---
+
+## Testing Rules
+
+- Backend: pytest from backend/ — `cd backend && python -m pytest`
+- Frontend: vitest from frontend/ — `cd frontend && npm test`
+- Full suite: tests/ at root — `python -m pytest tests/`
+- Every code change includes a runnable verification command
+- 31 unit tests must continue to pass after any change — check before commit
+- Coverage target: maintain 63%+ overall
