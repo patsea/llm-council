@@ -166,3 +166,9 @@ Search database e9e44e5e-02fd-4c1f-871b-4a57182bfb19 before re-investigating kno
 | Service independence | Backend (8001) and frontend (5173) are separate processes. Verify each independently after any change. Never assume both updated. |
 | Subagent | Use parallel agents for independent backend/frontend changes. Each writes findings before reporting. |
 | Model config discipline | All model references via data/model_config.json. Never hardcode. Verify config change propagates to all 3 stages. |
+
+
+## Model Rule (Non-Negotiable)
+- Claude Code interactive sessions: **claude-opus-4-6**
+- Sub-agent / pipeline API calls: **claude-sonnet-4-6**
+- Never hardcode model strings — always config-driven
