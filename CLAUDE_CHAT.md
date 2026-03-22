@@ -192,3 +192,102 @@ Write in real time during sessions. Also sweep at EOD for anything missed.
 
 ### EOD sweep
 Review session for any decisions not yet written. Capture before closing.
+---
+
+## Feedback Agent
+
+### Mode 1 — Session-Start Check
+**Trigger:** Automatically at the start of every Claude Chat session.
+**Time budget:** 2 minutes. 3-5 items max.
+
+Protocol:
+1. Search Notion LLM KB (263e739e-f799-44ca-bfa3-4781955e0916) — last 3 sessions.
+   Surface: open findings, unresolved test failures or model issues.
+2. Open Work section of this file — P1 items.
+3. Query Open Brain — decisions from last 7 days tagged llm-council.
+   Surface: any deliberation design or model decision relevant to today.
+
+Output format:
+```
+## Session Start — [date]
+**Open from last sessions:** [max 2 items or "none"]
+**P1 items:** [most urgent or "none"]
+**Recent decisions relevant today:** [max 1 item or "none"]
+**Suggested focus:** [one sentence]
+```
+
+### Mode 2 — Weekly Synthesis
+**Trigger:** "run feedback" in any session.
+**Time budget:** 5-10 minutes.
+
+Protocol:
+1. Notion LLM KB — all pages from last 7 days.
+2. Open Brain — all llm-council entries from last 7 days.
+3. data/conversations/ — count conversations this week. Any quality patterns
+   in how models are performing across the 3 stages?
+4. Test coverage — has 63% floor been maintained? Any regressions?
+5. Future enhancements section of CLAUDE.md — what's been deferred?
+
+Output format:
+```
+## Weekly Feedback — [date]
+
+**Deliberation quality patterns:**
+- [any observed pattern in Stage 1/2/3 outputs this week]
+
+**Test health:**
+- Coverage: [current %] vs 63% floor
+- Any regressions: [yes/no, detail]
+
+**Decisions to revisit:**
+- [Open Brain entry] — still valid?
+
+**Enhancement backlog changes:**
+- [item]: [prioritise/defer/close] because [evidence]
+
+**Recommended P1 next week:**
+- [task] because [evidence]
+```
+---
+
+## EOD Open Brain Protocol
+
+### What Claude Chat does at EOD
+Review the entire session. Identify everything worth writing to Open Brain:
+- Any decision Patrick made or stated
+- Any strategic choice or direction set
+- Any adaptation or change to approach
+- Any principle or preference Patrick expressed
+- Any insight that emerged
+
+**Threshold:** If it would help future-Patrick understand why something was decided — write it.
+
+### What goes into EOD-DISK-OPS
+For each identified entry:
+```bash
+curl -s -X POST \
+  "https://rktsziupwwvggefjgsil.supabase.co/functions/v1/ingest-thought?key=e62b35b7c52d097cfe6a35afa236277ad3a3eb310f93db9bd0e71fc9ac0d9373" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"<title>","content":"<full reasoning>","tags":"<project,topic>"}'
+```
+
+### Feedback in EOD-DISK-OPS
+After writing, query Open Brain and append to Handover:
+```bash
+curl -s -X POST \
+  "https://rktsziupwwvggefjgsil.supabase.co/functions/v1/open-brain-mcp?key=e62b35b7c52d097cfe6a35afa236277ad3a3eb310f93db9bd0e71fc9ac0d9373" \
+  -H "Content-Type: application/json" \
+  -d '{"method":"tools/call","params":{"name":"list_thoughts","arguments":{"limit":20}},"jsonrpc":"2.0","id":1}'
+```
+
+### Handover format (with feedback appended)
+```
+## Open Brain Feedback
+### Today
+- [title] — [summary]
+### Last 3 days
+- [title] — [summary]
+### Last 7 days
+- [title] — [summary]
+```
+Loads automatically when Handover used as session context.
