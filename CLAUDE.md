@@ -184,6 +184,17 @@ The entire flow is async/parallel where possible to minimize latency.
 
 ---
 
+## Notion Knowledge Base
+
+| Item | Value |
+|------|-------|
+| Notion: LLM Council Knowledge Base | ID: 263e739e-f799-44ca-bfa3-4781955e0916 |
+| Notion: LLM Council KB data_source | ID: e9e44e5e-02fd-4c1f-871b-4a57182bfb19 |
+
+FINDINGS and HANDOVER files sync to this database. See parent CLAUDE.md Rule 15 for sync protocol.
+
+---
+
 ## Testing Rules
 
 - Backend: pytest from backend/ — `cd backend && python -m pytest`
