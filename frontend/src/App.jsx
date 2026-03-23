@@ -221,11 +221,19 @@ function ChatPage() {
       });
     } catch (error) {
       console.error('Failed to send message:', error);
-      // Remove optimistic messages on error
-      setCurrentConversation((prev) => ({
-        ...prev,
-        messages: prev.messages.slice(0, -2),
-      }));
+      // Instead of removing messages, show error in the assistant message
+      setCurrentConversation((prev) => {
+        const messages = [...prev.messages];
+        const lastMsg = messages[messages.length - 1];
+        lastMsg.stage1 = null;
+        lastMsg.stage2 = null;
+        lastMsg.stage3 = {
+          model: 'error',
+          response: `❌ Error: ${error.message}\n\nThis typically happens when:\n- Your prompt is too long or complex\n- The request timed out (current limit: 15 minutes)\n- Network connectivity issues\n\nTry:\n- Shortening your prompt\n- Reducing the number of council models\n- Breaking your task into smaller parts`,
+        };
+        lastMsg.loading = { stage1: false, stage2: false, stage3: false };
+        return { ...prev, messages };
+      });
       setIsLoading(false);
     }
   };

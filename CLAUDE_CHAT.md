@@ -178,7 +178,7 @@ Search database e9e44e5e-02fd-4c1f-871b-4a57182bfb19 before re-investigating kno
 
 Write in real time during sessions. Also sweep at EOD for anything missed.
 
-### Write trigger (ingest-thought MCP immediately)
+### Write trigger (capture_thought MCP immediately)
 - Multi-LLM deliberation design decision — stage architecture, anonymization approach
 - Model selection or routing reasoning
 - Insight about how LLMs behave differently in deliberation vs solo use
@@ -288,3 +288,31 @@ logic is in the template file above.
 - [title] — [summary]
 ```
 Loads automatically when Handover used as session context.
+---
+
+## AI Spec & Roadmap KB
+
+**Database ID:** `32cc9e45e6a680d79bead2796cae8fdd`
+**Data source:** `32cc9e45-e6a6-80ec-8c4d-000b6cac425e`
+
+This is the cross-project product development database. All roadmap items,
+AI specs, investigations, investigation findings, retrospectives, and build
+logs live here. Not in files.
+
+### Types in this database
+- `roadmap-item` — feature on the roadmap
+- `ai-spec-draft` — spec in progress
+- `ai-spec-final` — validated, build-ready
+- `investigation` — Claude Code investigation instruction record
+- `investigation-findings` — Claude Code writes here in real time
+- `build-ready` — confirmed ready for Claude Code to build
+- `retrospective` — post-build review
+
+### Claude Code writes in real time
+During investigation and build, Claude Code writes findings to this database
+using the Notion MCP directly — not waiting for EOD. Every finding, every
+build log entry, every question goes here immediately.
+
+### Invoking the agents
+- Roadmap: "Read agents/roadmap-agent.md. Act as Roadmap Agent for [project]."
+- AI Spec: "Read agents/ai-spec-agent.md. Act as AI Spec Agent for [feature]."

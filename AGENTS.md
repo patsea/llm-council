@@ -99,3 +99,24 @@ This project IS the AI component — the entire 3-stage deliberation system:
 ### Output
 PASS / FAIL / NEEDS REVIEW per check.
 FAIL = hard blocker. NEEDS REVIEW = Patrick decision before commit.
+---
+
+## Roadmap Agent
+**Invoke:** "Read agents/roadmap-agent.md. Act as Roadmap Agent for llm-council."
+
+Builds and maintains the LLM Council roadmap. Architectural simplicity is a
+core constraint — features must not add operational complexity disproportionate
+to value. Test coverage floor (63%) is a hard dependency for any new feature.
+Notion DB: 32cc9e45e6a680d79bead2796cae8fdd
+
+---
+
+## AI Spec Agent
+**Invoke:** "Read agents/ai-spec-agent.md. Act as AI Spec Agent for [feature]."
+
+Owns the full AI Spec pipeline for llm-council features.
+User stories define: query input, stage behaviour, synthesis output.
+Critical invariant: Stage 2 anonymization must be preserved in all features —
+this is a non-negotiable FR in every AI Spec for llm-council.
+Claude Code writes investigation findings to Notion in real time.
+Notion DB: 32cc9e45e6a680d79bead2796cae8fdd
