@@ -156,24 +156,6 @@ Verify: page URL returned
 Search database e9e44e5e-02fd-4c1f-871b-4a57182bfb19 before re-investigating known patterns.
 ---
 
-## Superpowers — always active
-
-| Skill | Rule |
-|-------|------|
-| TDD | STEP 0: write failing tests first. Backend: pytest. Frontend: vitest. Report N passed / N total in every SUMMARY. 31 baseline tests must always pass. |
-| Systematic debugging | Root cause + fix in one pass. Standalone INVESTIGATE only when domain genuinely unknown. |
-| Verification | Run `cd backend && python -m pytest` AND `cd frontend && npm test` before SUMMARY. Coverage must not drop below 63%. |
-| Service independence | Backend (8001) and frontend (5173) are separate processes. Verify each independently after any change. Never assume both updated. |
-| Subagent | Use parallel agents for independent backend/frontend changes. Each writes findings before reporting. |
-| Model config discipline | All model references via data/model_config.json. Never hardcode. Verify config change propagates to all 3 stages. |
-
-
-## Model Rule (Non-Negotiable)
-- Claude Code interactive sessions: **claude-opus-4-6**
-- Sub-agent / pipeline API calls: **claude-sonnet-4-6**
-- Never hardcode model strings — always config-driven
----
-
 ## Open Brain — Personal Decision Record
 
 Write in real time during sessions. Also sweep at EOD for anything missed.
@@ -316,3 +298,74 @@ build log entry, every question goes here immediately.
 ### Invoking the agents
 - Roadmap: "Read agents/roadmap-agent.md. Act as Roadmap Agent for [project]."
 - AI Spec: "Read agents/ai-spec-agent.md. Act as AI Spec Agent for [feature]."
+
+---
+
+## Superpowers — Active Protocols (Non-Negotiable Gates)
+
+These are not guidelines. They are enforcement gates that fire automatically.
+Every gate applies to every session. No exceptions.
+
+### Gate 1 — Investigation Before Fix
+**Fires when:** Any fix, patch, or change is requested.
+**Protocol:** Confirm root cause is known before generating any FIX-* file.
+If root cause is not confirmed: generate INVESTIGATE-* instruction first.
+Exception: root cause explicitly confirmed in current session log.
+**Violation:** Generating FIX-* without confirmed root cause = blocked.
+
+### Gate 2 — Verification Gate
+**Fires before every SUMMARY step.**
+**Protocol:** The command was run and the actual output is shown — not inferred.
+- "No errors in console" = FAIL — show the actual output
+- "Tests pass" = FAIL unless N/N count shown
+- "Deployed successfully" = FAIL unless response or pod status shown
+**Violation:** SUMMARY without actual command output = blocked.
+
+### Gate 3 — Never Defer
+**Fires when:** Any issue, gap, or improvement is identified.
+**Protocol:** Generate the instruction file in the same response as identification.
+Never: "consider doing X later", "this could be a future improvement", "you might want to"
+**Violation:** Identified issue without instruction file in same response = blocked.
+
+### Gate 4 — Immediate Action
+**Fires when:** Patrick asks for anything actionable.
+**Protocol:** Do it immediately. No "should I proceed?", no "would you like me to?",
+no asking permission, no confirming before generating files.
+**Violation:** Asking permission before acting = blocked.
+
+### Gate 5 — Never Silently Truncate
+**Fires when:** Any content is shortened, summarised, or cut.
+**Protocol:** State explicitly what was cut and why. Immediately, in the same response.
+**Violation:** Shortening content without stating what was removed = blocked.
+
+### Gate 6 — Log Assessment
+**Fires when:** Any execution log or Claude Code output is provided.
+**Protocol:** Immediately assess:
+1. New pitfall needed? (was this non-obvious, likely to recur, caused or could cause an incident?)
+2. Documentation update needed? (CLAUDE.md, infra reference, architecture doc?)
+"No documentation updates required — [one-line reason]" is a valid and complete answer.
+**Violation:** Responding to a log without explicit assessment = blocked.
+
+### Gate 7 — Anonymization Invariant (LLM Council only)
+**Fires when:** Any change touches council.py, openrouter.py, or Stage 2 logic.
+**Protocol:** Verify model names are NOT exposed in Stage 2 API calls after the change.
+De-anonymization happens in UI only — this separation must be maintained.
+**Violation:** Stage 2 change without anonymization verification = blocked.
+
+### Gate 8 — Test Coverage Gate (LLM Council only)
+**Fires after every code change.**
+**Protocol:** Run `cd backend && python -m pytest` AND `cd frontend && npm test`.
+Coverage must not drop below 63%. SUMMARY always reports N/31 + coverage %.
+**Violation:** Code change without test run + coverage confirmed = blocked.
+
+### Gate 9 — TDD Gate (LLM Council only)
+**Fires on every BUILD step.**
+**Protocol:** STEP 0 writes failing tests first. Tests must fail before code is written.
+Tests must pass after code is written.
+**Violation:** BUILD step without failing-then-passing test cycle = blocked.
+
+### Gate 10 — Service Independence (LLM Council only)
+**Fires when:** Any change affects backend (8001) or frontend (5173).
+**Protocol:** Restart each service explicitly and verify each independently after changes.
+Never assume both services updated from a single restart.
+**Violation:** Service change without independent verification of each = blocked.
