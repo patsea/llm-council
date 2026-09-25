@@ -21,7 +21,7 @@ Claude Chat → generates instruction files → Patrick reviews → Claude Code 
 ~/Dropbox/ALOMA/claude-code/instructions/Project files/LLM Council/Upload/
 ~/Dropbox/ALOMA/claude-code/apps/llm-council/
 ~/Dropbox/ALOMA/claude-code/docs/findings/          ← central findings
-~/Dropbox/ALOMA/claude-code/docs/best-practices/    ← central best practices
+~/Dropbox/ALOMA/claude-code/knowledge/reference/best-practices/    ← central best practices
 ```
 
 ---
