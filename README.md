@@ -45,10 +45,10 @@ cd ..
 
 ### 2. Configure API Key
 
-Create a `.env` file in the project root:
+The key is read from macOS Keychain, item service `aloma-claude-code`, account `openrouter` (not from `.env`). Add it once; `-w` with no value prompts for the key, so it never lands in shell history:
 
 ```bash
-OPENROUTER_API_KEY=sk-or-v1-...
+security add-generic-password -a openrouter -s aloma-claude-code -w
 ```
 
 Get your API key at [openrouter.ai](https://openrouter.ai/). Make sure to purchase the credits you need, or sign up for automatic top up.

@@ -5,13 +5,11 @@ import json
 from pathlib import Path
 from typing import Dict, List, Any
 from datetime import datetime, timedelta
-from dotenv import load_dotenv
 import httpx
 
-load_dotenv()
-
-# OpenRouter API key
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+# OpenRouter API key, from macOS Keychain aloma-claude-code / openrouter (not .env)
+from .keychain import read_openrouter_key
+OPENROUTER_API_KEY = read_openrouter_key()
 
 # OpenRouter API endpoint
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"

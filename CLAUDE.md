@@ -19,7 +19,7 @@ LLM Council is a 3-stage deliberation system where multiple LLMs collaboratively
 **`config.py`**
 - Contains `COUNCIL_MODELS` (list of OpenRouter model identifiers)
 - Contains `CHAIRMAN_MODEL` (model that synthesizes final answer)
-- Uses environment variable `OPENROUTER_API_KEY` from `.env`
+- Reads `OPENROUTER_API_KEY` from macOS Keychain (`aloma-claude-code` / `openrouter`, via `backend/keychain.py`), never from `.env` (29 Sep 2026)
 - Backend runs on **port 8001** (NOT 8000 - user had another app on 8000)
 
 **`openrouter.py`**
@@ -201,5 +201,5 @@ FINDINGS and HANDOVER files sync to this database. See parent CLAUDE.md Rule 15 
 - Frontend: vitest from frontend/ — `cd frontend && npm test`
 - Full suite: tests/ at root — `python -m pytest tests/`
 - Every code change includes a runnable verification command
-- 31 unit tests must continue to pass after any change — check before commit
+- 37 unit tests must continue to pass after any change — check before commit
 - Coverage target: maintain 63%+ overall
