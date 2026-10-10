@@ -38,7 +38,7 @@ User → React UI (5173) → FastAPI (8001) → OpenRouter
 "Read apps/llm-council/CLAUDE.md. Act as [role] for [task]."
 
 ## Key Paths
-Base: /Users/pwilliamson/Dropbox/ALOMA/claude-code/apps/llm-council/
+Base: /Users/pwilliamson/Dropbox/repos/personal/llm-council/
 Panel: instructions/Project files/LLM Council/
 Upload: instructions/Project files/LLM Council/Upload/
 Findings: docs/findings/ (central)

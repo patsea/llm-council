@@ -19,7 +19,7 @@ Claude Chat → generates instruction files → Patrick reviews → Claude Code 
 ~/Dropbox/ALOMA/claude-code/instructions/YYYY-MM/
 ~/Dropbox/ALOMA/claude-code/instructions/Project files/LLM Council/
 ~/Dropbox/ALOMA/claude-code/instructions/Project files/LLM Council/Upload/
-~/Dropbox/ALOMA/claude-code/apps/llm-council/
+~/Dropbox/repos/personal/llm-council/
 ~/Dropbox/ALOMA/claude-code/docs/findings/          ← central findings
 ~/Dropbox/ALOMA/claude-code/knowledge/reference/best-practices/    ← central best practices
 ```
@@ -92,7 +92,7 @@ Every 15 interactions: assess context. >700k tokens → ask if EOD wanted.
 | Backend API | 8001 | FastAPI, Python, uv |
 | Frontend | 5173 | React, Vite |
 
-**Base:** `/Users/pwilliamson/Dropbox/ALOMA/claude-code/apps/llm-council/`
+**Base:** `/Users/pwilliamson/Dropbox/repos/personal/llm-council/`
 **Python:** uv for dependency management (`uv run`, `uv add`)
 **Models:** OpenRouter — config in data/model_config.json
 
